@@ -24,6 +24,8 @@ const SubjectDetector = ({
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const maskCanvasRef = useRef<HTMLCanvasElement>(null);
+  const isDrawingRef = useRef(false);
+  const lastPointRef = useRef<{ x: number; y: number } | null>(null);
 
   // Load the image and draw it on the canvas
   useEffect(() => {
@@ -93,28 +95,169 @@ const SubjectDetector = ({
     console.log("Image src set, waiting for load");
   }, [imageUrl]);
 
+  // Handle undo functionality
   const handleUndo = () => {
-    // Implement undo functionality
+    if (historyIndex <= 0) return;
+
+    const newIndex = historyIndex - 1;
+    console.log(`Undoing to history index ${newIndex}`);
+    setHistoryIndex(newIndex);
+
+    if (!maskCanvasRef.current) return;
+    const maskCanvas = maskCanvasRef.current;
+    const maskCtx = maskCanvas.getContext("2d");
+    if (!maskCtx) return;
+
+    maskCtx.putImageData(history[newIndex], 0, 0);
   };
 
+  // Handle redo functionality
   const handleRedo = () => {
-    // Implement redo functionality
+    if (historyIndex >= history.length - 1) return;
+
+    const newIndex = historyIndex + 1;
+    console.log(`Redoing to history index ${newIndex}`);
+    setHistoryIndex(newIndex);
+
+    if (!maskCanvasRef.current) return;
+    const maskCanvas = maskCanvasRef.current;
+    const maskCtx = maskCanvas.getContext("2d");
+    if (!maskCtx) return;
+
+    maskCtx.putImageData(history[newIndex], 0, 0);
   };
 
+  // Reset mask to black
   const resetMask = () => {
-    // Implement reset functionality
+    console.log("Resetting mask");
+    if (!maskCanvasRef.current) return;
+
+    const maskCanvas = maskCanvasRef.current;
+    const maskCtx = maskCanvas.getContext("2d");
+
+    if (!maskCtx) return;
+
+    // Fill with black
+    maskCtx.fillStyle = "black";
+    maskCtx.fillRect(0, 0, maskCanvas.width, maskCanvas.height);
+
+    // Save to history
+    const newMask = maskCtx.getImageData(
+      0,
+      0,
+      maskCanvas.width,
+      maskCanvas.height
+    );
+    setHistory([...history, newMask]);
+    setHistoryIndex(history.length);
+    console.log("Mask reset and saved to history");
   };
 
-  const startDrawing = () => {
-    // Implement drawing functionality
+  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!maskCanvasRef.current || !canvasRef.current) return;
+    console.log("Started drawing");
+    isDrawingRef.current = true;
+
+    const canvas = maskCanvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+
+    // Calculate the scaling factor between the displayed size and the actual canvas size
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    console.log(
+      `Drawing at position: ${x}, ${y} with scale factors: ${scaleX}, ${scaleY}`
+    );
+
+    lastPointRef.current = { x, y };
+    draw(x, y);
   };
 
   const stopDrawing = () => {
-    // Implement drawing functionality
+    if (isDrawingRef.current) {
+      console.log("Stopped drawing");
+      saveToHistory();
+    }
+    isDrawingRef.current = false;
+    lastPointRef.current = null;
   };
 
-  const handleMouseMove = () => {
-    // Implement drawing functionality
+  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawingRef.current || !maskCanvasRef.current || !canvasRef.current)
+      return;
+
+    const canvas = maskCanvasRef.current;
+    const rect = canvas.getBoundingClientRect();
+
+    // Calculate the scaling factor between the displayed size and the actual canvas size
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    const x = (e.clientX - rect.left) * scaleX;
+    const y = (e.clientY - rect.top) * scaleY;
+
+    draw(x, y);
+  };
+
+  const saveToHistory = () => {
+    console.log("Saving current state to history");
+    if (!maskCanvasRef.current) return;
+
+    const maskCanvas = maskCanvasRef.current;
+    const maskCtx = maskCanvas.getContext("2d");
+    if (!maskCtx) return;
+
+    const currentState = maskCtx.getImageData(
+      0,
+      0,
+      maskCanvas.width,
+      maskCanvas.height
+    );
+
+    // If we're not at the end of the history, remove future states
+    const newHistory = history.slice(0, historyIndex + 1);
+
+    // Add current state to history
+    newHistory.push(currentState);
+
+    // Update history state
+    setHistory(newHistory);
+    setHistoryIndex(newHistory.length - 1);
+    console.log(
+      `History updated, now at index ${newHistory.length - 1} of ${
+        newHistory.length - 1
+      }`
+    );
+  };
+
+  const draw = (x: number, y: number) => {
+    if (!isDrawingRef.current || !maskCanvasRef.current) return;
+
+    const canvas = maskCanvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // Draw a line from the last point to the current point
+    if (lastPointRef.current) {
+      ctx.beginPath();
+      ctx.moveTo(lastPointRef.current.x, lastPointRef.current.y);
+      ctx.lineTo(x, y);
+      ctx.lineWidth = brushSize * 2;
+      ctx.lineCap = "round";
+      ctx.strokeStyle = brushMode === "draw" ? "white" : "black";
+      ctx.stroke();
+    }
+
+    // Also draw a circle at the current point for better coverage
+    ctx.beginPath();
+    ctx.arc(x, y, brushSize, 0, Math.PI * 2);
+    ctx.fillStyle = brushMode === "draw" ? "white" : "black";
+    ctx.fill();
+
+    lastPointRef.current = { x, y };
   };
 
   return (
