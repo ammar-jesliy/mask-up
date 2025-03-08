@@ -3,7 +3,8 @@ import { TabsContent, Tabs, TabsList, TabsTrigger } from "./ui/tabs";
 import { Label } from "./ui/label";
 import { Slider } from "./ui/slider";
 import { Button } from "./ui/button";
-import { Eraser, Pencil, Redo, RefreshCw, Undo } from "lucide-react";
+import { Eraser, Pencil, Redo, RefreshCw, Undo, Wand2 } from "lucide-react";
+import { Alert, AlertDescription } from "./ui/alert";
 
 interface SubjectDetectorProps {
   imageUrl: string;
@@ -14,13 +15,18 @@ const SubjectDetector = ({
   imageUrl,
   onSubjectDetected,
 }: SubjectDetectorProps) => {
-  const [detectionMethod, setDetectionMethod] = useState("");
+  const [detectionMethod, setDetectionMethod] = useState("manual");
   const [brushSize, setBrushSize] = useState(10);
   const [brushMode, setBrushMode] = useState<"draw" | "erase">("draw");
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [history, setHistory] = useState<ImageData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
+  const [aiModelError, setAiModelError] = useState<string | null>(null);
+  const [isModelLoading, setIsModelLoading] = useState(false);
+  const [modelProgress, setModelProgress] = useState(0);
+  const [aiModelLoaded, setAiModelLoaded] = useState(false);
+  const [segmentationThreshold, setSegmentationThreshold] = useState(0.5);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const maskCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -260,6 +266,10 @@ const SubjectDetector = ({
     lastPointRef.current = { x, y };
   };
 
+  const detectSubjectAI = async () => {
+    // Implement AI detection here
+  };
+
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-medium">Select Subject</h3>
@@ -333,6 +343,74 @@ const SubjectDetector = ({
             Draw over the subject you want to keep. The white area will be
             preserved.
           </p>
+        </TabsContent>
+
+        <TabsContent value="ai" className="space-y-4 mt-4">
+          {isModelLoading ? (
+            <div className="p-6 border rounded-lg text-center">
+              <h4 className="font-medium mb-2">Loading AI Model...</h4>
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
+                <div
+                  className="bg-primary h-2.5 rounded-full"
+                  style={{ width: `${modelProgress}%` }}
+                ></div>
+              </div>
+              <p className="text-sm text-gray-500">
+                Please wait while we load the TensorFlow.js BodyPix model (
+                {modelProgress}%)
+              </p>
+            </div>
+          ) : aiModelError ? (
+            <Alert variant="destructive" className="mb-4">
+              <AlertDescription>
+                Failed to load AI model: {aiModelError}. Please try using manual
+                selection instead.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              <p className="text-sm text-gray-600">
+                Use AI to automatically detect people and other subjects in your
+                image. This works best with clear photos of people.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <Label className="mb-2 block">
+                    Detection Sensitivity:{" "}
+                    {Math.round(segmentationThreshold * 100)}%
+                  </Label>
+                  <Slider
+                    value={[segmentationThreshold * 100]}
+                    onValueChange={(values) =>
+                      setSegmentationThreshold(values[0] / 100)
+                    }
+                    min={10}
+                    max={90}
+                    step={5}
+                    className="w-full"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Higher values detect fewer areas as subject, lower values
+                    include more areas.
+                  </p>
+                </div>
+
+                <Button
+                  onClick={detectSubjectAI}
+                  disabled={isLoading || !aiModelLoaded}
+                >
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  {isLoading ? "Processing..." : "Detect with AI"}
+                </Button>
+              </div>
+
+              <p className="text-xs text-gray-500">
+                Note: After AI detection, you can still refine the selection
+                manually.
+              </p>
+            </>
+          )}
         </TabsContent>
       </Tabs>
 
