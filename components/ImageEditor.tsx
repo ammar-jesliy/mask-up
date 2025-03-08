@@ -27,6 +27,10 @@ const ImageEditor = () => {
     reader.readAsDataURL(file);
   };
 
+  const handleSubjectDetected = (mask: ImageData) => {
+    console.log("Subject detected");
+  };
+
   return (
     <div className="grid gap-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -69,7 +73,12 @@ const ImageEditor = () => {
         <TabsContent value="detect" className="mt-4">
           <Card>
             <CardContent className="pt-6">
-              {originalImage && <SubjectDetector />}
+              {originalImage && (
+                <SubjectDetector
+                  imageUrl={originalImage}
+                  onSubjectDetected={handleSubjectDetected}
+                />
+              )}
             </CardContent>
           </Card>
         </TabsContent>
