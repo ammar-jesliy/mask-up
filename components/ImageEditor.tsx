@@ -5,13 +5,14 @@ import { Card, CardContent } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Button } from "./ui/button";
 import { useState } from "react";
+import SubjectDetector from "./SubjectDetector";
 
 const ImageEditor = () => {
   const [activeTab, setActiveTab] = useState('upload');
 
   return (
     <div className="grid gap-6">
-      <Tabs value={activeTab} onChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="upload">Upload</TabsTrigger>
           <TabsTrigger value="detect">Select Subject</TabsTrigger>
@@ -40,6 +41,15 @@ const ImageEditor = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        <TabsContent value="detect" className="mt-4">
+          <Card>
+            <CardContent className="pt-6">
+              <SubjectDetector />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
       </Tabs>
     </div>
   );
