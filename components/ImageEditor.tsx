@@ -328,7 +328,16 @@ const ImageEditor = () => {
     }
   };
 
-  const handleDownload = () => {};
+  const handleDownload = () => {
+    if (!processedImage) return;
+
+    const link = document.createElement("a");
+    link.href = processedImage;
+    link.download = "processed-image.png";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="grid gap-6">
