@@ -30,6 +30,7 @@ const ImageEditor = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [motionBlurDirection, setMotionBlurDirection] = useState("horizontal");
   const [colorizeColor, setColorizeColor] = useState("#6432c8"); // Default purple color
+  const [fileSizeError, setFileSizeError] = useState<string | null>(null);
 
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,6 +39,19 @@ const ImageEditor = () => {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Check file size - 2MB limit
+    const MAX_FILE_SIZE = 2 * 1024 * 1024; // 2MB in bytes
+    if (file.size > MAX_FILE_SIZE) {
+      setFileSizeError(
+        `File size exceeds 2MB limit (${(file.size / (1024 * 1024)).toFixed(
+          2
+        )}MB)`
+      );
+      return;
+    }
+
+    setFileSizeError(null); // Clear any previous errors
 
     // Convert the file to a data URL in base64 format
     const reader = new FileReader();
@@ -379,8 +393,13 @@ const ImageEditor = () => {
                   <ImageIcon className="w-12 h-12 text-gray-400 mb-4" />
                   <h3 className="text-lg font-medium mb-2">Upload an image</h3>
                   <p className="text-sm text-gray-500 mb-4">
-                    PNG, JPG or GIF, up to 10MB
+                    PNG, JPG or GIF, up to 2MB
                   </p>
+                  {fileSizeError && (
+                    <div className="text-red-500 mb-3 p-2 bg-red-50 rounded-md text-sm">
+                      {fileSizeError}
+                    </div>
+                  )}
                   <Button
                     onClick={() => fileInputRef.current?.click()}
                     className="mb-2"
