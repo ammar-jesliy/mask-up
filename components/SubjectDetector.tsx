@@ -533,6 +533,43 @@ const SubjectDetector = ({
     }
   };
 
+  const confirmSelection = () => {
+    console.log("Confirming selection");
+    if (!maskCanvasRef.current || !canvasRef.current) return;
+
+    const maskCanvas = maskCanvasRef.current;
+    const maskCtx = maskCanvas.getContext("2d");
+
+    const originalCanvas = canvasRef.current;
+
+    if (!maskCtx) return;
+
+    // Ensure the mask has the same dimensions as the original image
+    console.log(
+      `Confirming selection with dimensions: ${maskCanvas.width}x${maskCanvas.height}`
+    );
+    console.log(
+      `Original image dimensions: ${originalCanvas.width}x${originalCanvas.height}`
+    );
+
+    if (
+      maskCanvas.width !== originalCanvas.width ||
+      maskCanvas.height !== originalCanvas.height
+    ) {
+      console.log(
+        "WARNING: Mask dimensions don't match original image dimensions"
+      );
+    }
+
+    const maskData = maskCtx.getImageData(
+      0,
+      0,
+      maskCanvas.width,
+      maskCanvas.height
+    );
+    onSubjectDetected(maskData);
+  };
+
   return (
     <div className="space-y-6">
       <h3 className="text-lg font-medium">Select Subject</h3>
@@ -717,6 +754,14 @@ const SubjectDetector = ({
           </div>
         )}
       </div>
+
+      <Button
+        onClick={confirmSelection}
+        className="w-full"
+        disabled={isLoading}
+      >
+        Confirm Selection
+      </Button>
     </div>
   );
 };
