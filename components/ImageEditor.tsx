@@ -353,27 +353,50 @@ const ImageEditor = () => {
         <TabsContent value="upload" className="mt-4">
           <Card>
             <CardContent className="pt-6">
-              <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-                <ImageIcon className="w-12 h-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium mb-2">Upload an image</h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  PNG, JPG or GIF, up to 10MB
-                </p>
-                <Button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="mb-2"
-                >
-                  <Upload className="mr-2 h-4 w-4" />
-                  Select Image
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleFileUpload}
-                />
-              </div>
+              {originalImage ? (
+                <div className="flex flex-col items-center justify-center">
+                  <div className="mb-4 border rounded-lg overflow-hidden">
+                    <img
+                      src={originalImage}
+                      alt="Uploaded image"
+                      className="max-w-full h-auto max-h-[400px] object-contain"
+                    />
+                  </div>
+                  <div className="flex gap-4">
+                    <Button onClick={() => setActiveTab("detect")}>
+                      Continue to Subject Selection
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setOriginalImage(null)}
+                    >
+                      Clear Image
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
+                  <ImageIcon className="w-12 h-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium mb-2">Upload an image</h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    PNG, JPG or GIF, up to 10MB
+                  </p>
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="mb-2"
+                  >
+                    <Upload className="mr-2 h-4 w-4" />
+                    Select Image
+                  </Button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
