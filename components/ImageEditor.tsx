@@ -566,35 +566,21 @@ const ImageEditor = () => {
 
                 <Separator className="my-4" />
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Original</h4>
-                    <div className="aspect-video bg-gray-100 rounded-md overflow-hidden flex items-center justify-center">
-                      {originalImage && (
-                        <img
-                          src={originalImage || "/placeholder.svg"}
-                          alt="Original"
-                          className="max-w-full max-h-full object-contain"
-                          style={{ maxHeight: "100%", maxWidth: "100%" }}
-                        />
-                      )}
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Subject Mask</h4>
-                    <div className="aspect-video bg-gray-100 rounded-md overflow-hidden flex items-center justify-center">
-                      {subjectMask && (
-                        <>
-                          <canvas
-                            ref={previewCanvasRef}
-                            className="max-w-full max-h-full object-contain"
-                          />
-                          <canvas ref={canvasRef} className="hidden" />
-                        </>
-                      )}
-                    </div>
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Original</h4>
+                  <div className="aspect-video bg-gray-100 rounded-md overflow-hidden flex items-center justify-center">
+                    {originalImage && (
+                      <img
+                        src={originalImage || "/placeholder.svg"}
+                        alt="Original"
+                        className="max-w-full max-h-full object-contain"
+                        style={{ maxHeight: "100%", maxWidth: "100%" }}
+                      />
+                    )}
                   </div>
                 </div>
+                <canvas ref={previewCanvasRef} className="hidden" />
+                <canvas ref={canvasRef} className="hidden" />
               </CardContent>
             </Card>
           </div>
