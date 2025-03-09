@@ -20,7 +20,6 @@ const ImageEditor = () => {
   const [effectIntensity, setEffectIntensity] = useState(50);
   const [isProcessing, setIsProcessing] = useState(false);
 
-
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -40,25 +39,294 @@ const ImageEditor = () => {
   };
 
   const handleSubjectDetected = (mask: ImageData) => {
-    console.log("Subject detected, dimensions:", mask.width, "x", mask.height)
+    console.log("Subject detected, dimensions:", mask.width, "x", mask.height);
 
     // Store the mask
-    setSubjectMask(mask)
-    setActiveTab("effects")
+    setSubjectMask(mask);
+    setActiveTab("effects");
 
     // Display the mask in the preview
     if (previewCanvasRef.current) {
-      const ctx = previewCanvasRef.current.getContext("2d")
+      const ctx = previewCanvasRef.current.getContext("2d");
       if (ctx) {
-        previewCanvasRef.current.width = mask.width
-        previewCanvasRef.current.height = mask.height
-        ctx.putImageData(mask, 0, 0)
-        console.log("Mask preview displayed with dimensions:", mask.width, "x", mask.height)
+        previewCanvasRef.current.width = mask.width;
+        previewCanvasRef.current.height = mask.height;
+        ctx.putImageData(mask, 0, 0);
+        console.log(
+          "Mask preview displayed with dimensions:",
+          mask.width,
+          "x",
+          mask.height
+        );
       }
     }
   };
 
-  const applyEffect = () => {};
+  const applyEffect = () => {
+    if (!originalImage || !subjectMask || !canvasRef.current) return;
+
+    setIsProcessing(true);
+    console.log(
+      "Applying effect:",
+      selectedEffect,
+      "with intensity:",
+      effectIntensity
+    );
+    console.log(
+      "Subject mask dimensions:",
+      subjectMask.width,
+      "x",
+      subjectMask.height
+    );
+
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      // Set canvas dimensions to match image
+      canvas.width = img.width;
+      canvas.height = img.height;
+      console.log("Canvas dimensions set to:", img.width, "x", img.height);
+
+      // Draw original image
+      ctx.drawImage(img, 0, 0);
+      console.log("Original image drawn to canvas");
+
+      // Get image data
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      console.log(
+        "Image data dimensions:",
+        imageData.width,
+        "x",
+        imageData.height
+      );
+
+      // Check if mask and image dimensions match
+      if (
+        subjectMask.width !== imageData.width ||
+        subjectMask.height !== imageData.height
+      ) {
+        console.warn(
+          "Mask dimensions don't match image dimensions. Mask:",
+          subjectMask.width,
+          "x",
+          subjectMask.height,
+          "Image:",
+          imageData.width,
+          "x",
+          imageData.height
+        );
+      }
+
+      // Apply the selected effect to the background (non-subject areas)
+      applyEffectToBackground(
+        imageData,
+        subjectMask,
+        selectedEffect,
+        effectIntensity / 100
+      );
+
+      // Put the processed image data back on canvas
+      ctx.putImageData(imageData, 0, 0);
+      console.log("Effect applied and drawn to canvas");
+
+      // Update the processed image state
+      setProcessedImage(canvas.toDataURL("image/png"));
+      setIsProcessing(false);
+    };
+    img.onerror = (error) => {
+      console.error("Error loading image for effect:", error);
+      setIsProcessing(false);
+    };
+    img.src = originalImage;
+  };
+
+  const applyEffectToBackground = (
+    imageData: ImageData,
+    mask: ImageData,
+    effect: string,
+    intensity: number
+  ) => {
+    console.log("Applying", effect, "to background with intensity", intensity);
+    const data = imageData.data;
+    const maskData = mask.data;
+    const width = imageData.width;
+    const height = imageData.height;
+
+    // Create temporary arrays for more complex effects
+    const tempR = new Uint8ClampedArray(width * height);
+    const tempG = new Uint8ClampedArray(width * height);
+    const tempB = new Uint8ClampedArray(width * height);
+
+    // First pass: store original values
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4;
+        tempR[y * width + x] = data[i];
+        tempG[y * width + x] = data[i + 1];
+        tempB[y * width + x] = data[i + 2];
+      }
+    }
+
+    // Second pass: apply effects
+    for (let y = 0; y < height; y++) {
+      for (let x = 0; x < width; x++) {
+        const i = (y * width + x) * 4;
+
+        // If mask pixel is not white (subject), apply effect
+        // White (255,255,255) indicates the subject
+        if (
+          maskData[i] < 200 ||
+          maskData[i + 1] < 200 ||
+          maskData[i + 2] < 200
+        ) {
+          switch (effect) {
+            case "blur":
+              // Gaussian-like blur
+              let sumR = 0,
+                sumG = 0,
+                sumB = 0,
+                count = 0;
+              const blurRadius = Math.max(1, Math.floor(5 * intensity));
+
+              for (let ky = -blurRadius; ky <= blurRadius; ky++) {
+                for (let kx = -blurRadius; kx <= blurRadius; kx++) {
+                  const nx = x + kx;
+                  const ny = y + ky;
+
+                  if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                    sumR += tempR[ny * width + nx];
+                    sumG += tempG[ny * width + nx];
+                    sumB += tempB[ny * width + nx];
+                    count++;
+                  }
+                }
+              }
+
+              if (count > 0) {
+                data[i] =
+                  data[i] * (1 - intensity) + (sumR / count) * intensity;
+                data[i + 1] =
+                  data[i + 1] * (1 - intensity) + (sumG / count) * intensity;
+                data[i + 2] =
+                  data[i + 2] * (1 - intensity) + (sumB / count) * intensity;
+              }
+              break;
+
+            case "motionBlur":
+              // Motion blur (horizontal direction)
+              let motionSumR = 0,
+                motionSumG = 0,
+                motionSumB = 0,
+                motionCount = 0;
+              const motionLength = Math.max(1, Math.floor(15 * intensity));
+
+              // Sample only in horizontal direction for motion effect
+              for (let kx = -motionLength; kx <= motionLength; kx++) {
+                const nx = x + kx;
+                const ny = y;
+
+                if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                  motionSumR += tempR[ny * width + nx];
+                  motionSumG += tempG[ny * width + nx];
+                  motionSumB += tempB[ny * width + nx];
+                  motionCount++;
+                }
+              }
+
+              if (motionCount > 0) {
+                data[i] =
+                  data[i] * (1 - intensity) +
+                  (motionSumR / motionCount) * intensity;
+                data[i + 1] =
+                  data[i + 1] * (1 - intensity) +
+                  (motionSumG / motionCount) * intensity;
+                data[i + 2] =
+                  data[i + 2] * (1 - intensity) +
+                  (motionSumB / motionCount) * intensity;
+              }
+              break;
+
+            case "pixelate":
+              // Pixelation effect
+              const blockSize = Math.max(2, Math.floor(20 * intensity));
+              const blockX = Math.floor(x / blockSize) * blockSize;
+              const blockY = Math.floor(y / blockSize) * blockSize;
+
+              if (blockX < width && blockY < height) {
+                data[i] = tempR[blockY * width + blockX];
+                data[i + 1] = tempG[blockY * width + blockX];
+                data[i + 2] = tempB[blockY * width + blockX];
+              }
+              break;
+
+            case "colorize":
+              // Apply a color tint
+              const r = 100 * intensity;
+              const g = 50 * intensity;
+              const b = 200 * intensity;
+
+              data[i] = data[i] * (1 - intensity) + r;
+              data[i + 1] = data[i + 1] * (1 - intensity) + g;
+              data[i + 2] = data[i + 2] * (1 - intensity) + b;
+              break;
+
+            case "invert":
+              // Invert colors
+              data[i] = 255 - data[i] * intensity - data[i] * (1 - intensity);
+              data[i + 1] =
+                255 - data[i + 1] * intensity - data[i + 1] * (1 - intensity);
+              data[i + 2] =
+                255 - data[i + 2] * intensity - data[i + 2] * (1 - intensity);
+              break;
+
+            case "grayscale":
+              // Convert to grayscale
+              const gray =
+                data[i] * 0.3 + data[i + 1] * 0.59 + data[i + 2] * 0.11;
+              data[i] = data[i] * (1 - intensity) + gray * intensity;
+              data[i + 1] = data[i + 1] * (1 - intensity) + gray * intensity;
+              data[i + 2] = data[i + 2] * (1 - intensity) + gray * intensity;
+              break;
+            case "motionBlur":
+              // Simple motion blur (averaging with neighbor pixels)
+              const offset = Math.max(1, Math.floor(10 * intensity)); // Adjust offset based on intensity
+              let sumR_motion = 0,
+                sumG_motion = 0,
+                sumB_motion = 0,
+                count_motion = 0;
+
+              for (let k = -offset; k <= offset; k++) {
+                const nx = x + k;
+                if (nx >= 0 && nx < width) {
+                  const neighborIndex = (y * width + nx) * 4;
+                  sumR_motion += tempR[y * width + nx];
+                  sumG_motion += tempG[y * width + nx];
+                  sumB_motion += tempB[y * width + nx];
+                  count_motion++;
+                }
+              }
+
+              if (count_motion > 0) {
+                data[i] =
+                  data[i] * (1 - intensity) +
+                  (sumR_motion / count_motion) * intensity;
+                data[i + 1] =
+                  data[i + 1] * (1 - intensity) +
+                  (sumG_motion / count_motion) * intensity;
+                data[i + 2] =
+                  data[i + 2] * (1 - intensity) +
+                  (sumB_motion / count_motion) * intensity;
+              }
+              break;
+          }
+        }
+      }
+    }
+  };
 
   const handleDownload = () => {};
 
@@ -70,7 +338,9 @@ const ImageEditor = () => {
           <TabsTrigger value="detect" disabled={!originalImage}>
             Select Subject
           </TabsTrigger>
-          <TabsTrigger value="effects" disabled={!subjectMask} >Apply Effects</TabsTrigger>
+          <TabsTrigger value="effects" disabled={!subjectMask}>
+            Apply Effects
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="upload" className="mt-4">
@@ -174,7 +444,9 @@ const ImageEditor = () => {
                   </div>
 
                   <div>
-                    <Label className="mb-2 block">Effect Intensity: {effectIntensity}%</Label>
+                    <Label className="mb-2 block">
+                      Effect Intensity: {effectIntensity}%
+                    </Label>
                     <Slider
                       value={[effectIntensity]}
                       onValueChange={(values) => setEffectIntensity(values[0])}
@@ -185,7 +457,11 @@ const ImageEditor = () => {
                     />
                   </div>
 
-                  <Button onClick={applyEffect} className="w-full" disabled={isProcessing}>
+                  <Button
+                    onClick={applyEffect}
+                    className="w-full"
+                    disabled={isProcessing}
+                  >
                     <Wand2 className="mr-2 h-4 w-4" />
                     {isProcessing ? "Processing..." : "Apply Effect"}
                   </Button>
@@ -216,7 +492,9 @@ const ImageEditor = () => {
                       </Button>
                     </>
                   ) : (
-                    <p className="text-gray-500 text-sm">Apply an effect to see the preview</p>
+                    <p className="text-gray-500 text-sm">
+                      Apply an effect to see the preview
+                    </p>
                   )}
                 </div>
 
@@ -241,7 +519,10 @@ const ImageEditor = () => {
                     <div className="aspect-video bg-gray-100 rounded-md overflow-hidden flex items-center justify-center">
                       {subjectMask && (
                         <>
-                          <canvas ref={previewCanvasRef} className="max-w-full max-h-full object-contain" />
+                          <canvas
+                            ref={previewCanvasRef}
+                            className="max-w-full max-h-full object-contain"
+                          />
                           <canvas ref={canvasRef} className="hidden" />
                         </>
                       )}
@@ -252,7 +533,6 @@ const ImageEditor = () => {
             </Card>
           </div>
         </TabsContent>
-
       </Tabs>
     </div>
   );
