@@ -186,19 +186,51 @@ const SubjectDetector = ({
     const canvas = maskCanvasRef.current;
     const rect = canvas.getBoundingClientRect();
 
-    // Calculate the scaling factor between the displayed size and the actual canvas size
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    // Get the actual displayed dimensions
+    const displayedWidth = rect.width;
+    const displayedHeight = rect.height;
 
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    // Calculate aspect ratios
+    const canvasAspectRatio = canvas.width / canvas.height;
+    const containerAspectRatio = displayedWidth / displayedHeight;
 
-    console.log(
-      `Drawing at position: ${x}, ${y} with scale factors: ${scaleX}, ${scaleY}`
-    );
+    // Calculate the actual displayed image dimensions (accounting for objectFit: "contain")
+    let renderedWidth,
+      renderedHeight,
+      offsetX = 0,
+      offsetY = 0;
 
-    lastPointRef.current = { x, y };
-    draw(x, y);
+    if (containerAspectRatio > canvasAspectRatio) {
+      // Image is letterboxed on the sides (has empty space on left/right)
+      renderedHeight = displayedHeight;
+      renderedWidth = renderedHeight * canvasAspectRatio;
+      offsetX = (displayedWidth - renderedWidth) / 2;
+    } else {
+      // Image is letterboxed on top/bottom (has empty space on top/bottom)
+      renderedWidth = displayedWidth;
+      renderedHeight = renderedWidth / canvasAspectRatio;
+      offsetY = (displayedHeight - renderedHeight) / 2;
+    }
+
+    // Calculate the position on the actual canvas, accounting for letterboxing
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Ensure the click is within the actual rendered image area
+    if (
+      mouseX >= offsetX &&
+      mouseX <= offsetX + renderedWidth &&
+      mouseY >= offsetY &&
+      mouseY <= offsetY + renderedHeight
+    ) {
+      // Convert the mouse position to the actual canvas coordinates
+      const x = ((mouseX - offsetX) / renderedWidth) * canvas.width;
+      const y = ((mouseY - offsetY) / renderedHeight) * canvas.height;
+
+      console.log(`Drawing at canvas position: ${x}, ${y}`);
+      lastPointRef.current = { x, y };
+      draw(x, y);
+    }
   };
 
   const stopDrawing = () => {
@@ -217,12 +249,39 @@ const SubjectDetector = ({
     const canvas = maskCanvasRef.current;
     const rect = canvas.getBoundingClientRect();
 
-    // Calculate the scaling factor between the displayed size and the actual canvas size
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
+    // Get the actual displayed dimensions
+    const displayedWidth = rect.width;
+    const displayedHeight = rect.height;
 
-    const x = (e.clientX - rect.left) * scaleX;
-    const y = (e.clientY - rect.top) * scaleY;
+    // Calculate aspect ratios
+    const canvasAspectRatio = canvas.width / canvas.height;
+    const containerAspectRatio = displayedWidth / displayedHeight;
+
+    // Calculate the actual displayed image dimensions (accounting for objectFit: "contain")
+    let renderedWidth,
+      renderedHeight,
+      offsetX = 0,
+      offsetY = 0;
+
+    if (containerAspectRatio > canvasAspectRatio) {
+      // Image is letterboxed on the sides (has empty space on left/right)
+      renderedHeight = displayedHeight;
+      renderedWidth = renderedHeight * canvasAspectRatio;
+      offsetX = (displayedWidth - renderedWidth) / 2;
+    } else {
+      // Image is letterboxed on top/bottom (has empty space on top/bottom)
+      renderedWidth = displayedWidth;
+      renderedHeight = renderedWidth / canvasAspectRatio;
+      offsetY = (displayedHeight - renderedHeight) / 2;
+    }
+
+    // Calculate the position on the actual canvas, accounting for letterboxing
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+
+    // Convert the mouse position to the actual canvas coordinates
+    const x = ((mouseX - offsetX) / renderedWidth) * canvas.width;
+    const y = ((mouseY - offsetY) / renderedHeight) * canvas.height;
 
     draw(x, y);
   };
@@ -715,10 +774,7 @@ const SubjectDetector = ({
       </Tabs>
 
       <div className="relative border rounded-lg overflow-hidden">
-        <div
-          className="relative"
-          style={{ width: "100%", position: "relative" }}
-        >
+        <div className="relative" style={{ width: "100%" }}>
           <canvas
             ref={canvasRef}
             className="w-full h-auto"
