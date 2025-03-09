@@ -550,7 +550,7 @@ const ImageEditor = () => {
                       <Button
                         variant="secondary"
                         size="sm"
-                        className="absolute bottom-2 right-2"
+                        className="absolute bottom-2 right-2 cursor-pointer"
                         onClick={handleDownload}
                       >
                         <Download className="mr-2 h-4 w-4" />
