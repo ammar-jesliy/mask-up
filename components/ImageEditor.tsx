@@ -1,6 +1,15 @@
 "use client";
 
-import { ArrowDown, ArrowDownRight, ArrowRight, ArrowUpRight, Download, ImageIcon, Upload, Wand2 } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  Download,
+  ImageIcon,
+  Upload,
+  Wand2,
+} from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Button } from "./ui/button";
@@ -20,6 +29,7 @@ const ImageEditor = () => {
   const [effectIntensity, setEffectIntensity] = useState(50);
   const [isProcessing, setIsProcessing] = useState(false);
   const [motionBlurDirection, setMotionBlurDirection] = useState("horizontal");
+  const [colorizeColor, setColorizeColor] = useState("#6432c8"); // Default purple color
 
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -227,8 +237,9 @@ const ImageEditor = () => {
 
               // Sample in the selected direction
               for (let k = -motionLength; k <= motionLength; k++) {
-                let nx = x, ny = y;
-                
+                let nx = x,
+                  ny = y;
+
                 switch (motionBlurDirection) {
                   case "horizontal":
                     nx = x + k;
@@ -281,10 +292,11 @@ const ImageEditor = () => {
               break;
 
             case "colorize":
-              // Apply a color tint
-              const r = 100 * intensity;
-              const g = 50 * intensity;
-              const b = 200 * intensity;
+              // Convert hex color to RGB
+              const hexColor = colorizeColor.replace("#", "");
+              const r = parseInt(hexColor.substring(0, 2), 16) * intensity;
+              const g = parseInt(hexColor.substring(2, 4), 16) * intensity;
+              const b = parseInt(hexColor.substring(4, 6), 16) * intensity;
 
               data[i] = data[i] * (1 - intensity) + r;
               data[i + 1] = data[i + 1] * (1 - intensity) + g;
@@ -451,6 +463,21 @@ const ImageEditor = () => {
                       className="w-full"
                     />
                   </div>
+
+                  {selectedEffect === "colorize" && (
+                    <div>
+                      <Label className="mb-2 block">Color</Label>
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="color"
+                          value={colorizeColor}
+                          onChange={(e) => setColorizeColor(e.target.value)}
+                          className="w-10 h-10 rounded cursor-pointer"
+                        />
+                        <span className="text-sm">{colorizeColor}</span>
+                      </div>
+                    </div>
+                  )}
 
                   {selectedEffect === "motionBlur" && (
                     <div>
