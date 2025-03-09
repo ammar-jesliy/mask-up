@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, ImageIcon, Upload, Wand2 } from "lucide-react";
+import { ArrowDown, ArrowDownRight, ArrowRight, ArrowUpRight, Download, ImageIcon, Upload, Wand2 } from "lucide-react";
 import { Card, CardContent } from "./ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Button } from "./ui/button";
@@ -19,6 +19,7 @@ const ImageEditor = () => {
   const [selectedEffect, setSelectedEffect] = useState("blur");
   const [effectIntensity, setEffectIntensity] = useState(50);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [motionBlurDirection, setMotionBlurDirection] = useState("horizontal");
 
   const previewCanvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -217,17 +218,33 @@ const ImageEditor = () => {
               break;
 
             case "motionBlur":
-              // Motion blur (horizontal direction)
+              // Motion blur in selected direction
               let motionSumR = 0,
                 motionSumG = 0,
                 motionSumB = 0,
                 motionCount = 0;
               const motionLength = Math.max(1, Math.floor(15 * intensity));
 
-              // Sample only in horizontal direction for motion effect
-              for (let kx = -motionLength; kx <= motionLength; kx++) {
-                const nx = x + kx;
-                const ny = y;
+              // Sample in the selected direction
+              for (let k = -motionLength; k <= motionLength; k++) {
+                let nx = x, ny = y;
+                
+                switch (motionBlurDirection) {
+                  case "horizontal":
+                    nx = x + k;
+                    break;
+                  case "vertical":
+                    ny = y + k;
+                    break;
+                  case "diagonal1": // top-right to bottom-left
+                    nx = x + k;
+                    ny = y - k;
+                    break;
+                  case "diagonal2": // top-left to bottom-right
+                    nx = x + k;
+                    ny = y + k;
+                    break;
+                }
 
                 if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
                   motionSumR += tempR[ny * width + nx];
@@ -290,37 +307,6 @@ const ImageEditor = () => {
               data[i] = data[i] * (1 - intensity) + gray * intensity;
               data[i + 1] = data[i + 1] * (1 - intensity) + gray * intensity;
               data[i + 2] = data[i + 2] * (1 - intensity) + gray * intensity;
-              break;
-            case "motionBlur":
-              // Simple motion blur (averaging with neighbor pixels)
-              const offset = Math.max(1, Math.floor(10 * intensity)); // Adjust offset based on intensity
-              let sumR_motion = 0,
-                sumG_motion = 0,
-                sumB_motion = 0,
-                count_motion = 0;
-
-              for (let k = -offset; k <= offset; k++) {
-                const nx = x + k;
-                if (nx >= 0 && nx < width) {
-                  const neighborIndex = (y * width + nx) * 4;
-                  sumR_motion += tempR[y * width + nx];
-                  sumG_motion += tempG[y * width + nx];
-                  sumB_motion += tempB[y * width + nx];
-                  count_motion++;
-                }
-              }
-
-              if (count_motion > 0) {
-                data[i] =
-                  data[i] * (1 - intensity) +
-                  (sumR_motion / count_motion) * intensity;
-                data[i + 1] =
-                  data[i + 1] * (1 - intensity) +
-                  (sumG_motion / count_motion) * intensity;
-                data[i + 2] =
-                  data[i + 2] * (1 - intensity) +
-                  (sumB_motion / count_motion) * intensity;
-              }
               break;
           }
         }
@@ -465,6 +451,50 @@ const ImageEditor = () => {
                       className="w-full"
                     />
                   </div>
+
+                  {selectedEffect === "motionBlur" && (
+                    <div>
+                      <Label className="mb-2 block">Motion Direction</Label>
+                      <RadioGroup
+                        value={motionBlurDirection}
+                        onValueChange={setMotionBlurDirection}
+                        className="grid grid-cols-2 gap-2"
+                      >
+                        <Label
+                          htmlFor="horizontal"
+                          className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                        >
+                          <RadioGroupItem value="horizontal" id="horizontal" />
+                          <span>Horizontal</span>
+                          <ArrowRight className="mr-2 h-4 w-4" />
+                        </Label>
+                        <Label
+                          htmlFor="vertical"
+                          className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                        >
+                          <RadioGroupItem value="vertical" id="vertical" />
+                          <span>Vertical</span>
+                          <ArrowDown className="mr-2 h-4 w-4" />
+                        </Label>
+                        <Label
+                          htmlFor="diagonal1"
+                          className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                        >
+                          <RadioGroupItem value="diagonal1" id="diagonal1" />
+                          <span>Diagonal</span>
+                          <ArrowUpRight className="mr-2 h-4 w-4" />
+                        </Label>
+                        <Label
+                          htmlFor="diagonal2"
+                          className="flex items-center space-x-2 border rounded-md p-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                        >
+                          <RadioGroupItem value="diagonal2" id="diagonal2" />
+                          <span>Diagonal</span>
+                          <ArrowDownRight className="mr-2 h-4 w-4" />
+                        </Label>
+                      </RadioGroup>
+                    </div>
+                  )}
 
                   <Button
                     onClick={applyEffect}
