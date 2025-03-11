@@ -355,11 +355,21 @@ const ImageEditor = () => {
     <div className="grid gap-6">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="upload">Upload</TabsTrigger>
-          <TabsTrigger value="detect" disabled={!originalImage}>
+          <TabsTrigger value="upload" className="sm:text-sm text-xs">
+            Upload
+          </TabsTrigger>
+          <TabsTrigger
+            value="detect"
+            disabled={!originalImage}
+            className="sm:text-sm text-xs"
+          >
             Select Subject
           </TabsTrigger>
-          <TabsTrigger value="effects" disabled={!subjectMask}>
+          <TabsTrigger
+            value="effects"
+            disabled={!subjectMask}
+            className="sm:text-sm text-xs"
+          >
             Apply Effects
           </TabsTrigger>
         </TabsList>
@@ -376,7 +386,7 @@ const ImageEditor = () => {
                       className="max-w-full h-auto max-h-[400px] object-contain"
                     />
                   </div>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4">
                     <Button onClick={() => setActiveTab("detect")}>
                       Continue to Subject Selection
                     </Button>
