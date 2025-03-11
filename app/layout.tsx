@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "MaskUp",
-  description: "A face anonymization tool",
+  description: "A background effect generator tool",
 };
 
 export default function RootLayout({
