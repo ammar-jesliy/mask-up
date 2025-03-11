@@ -1,9 +1,10 @@
 import ImageEditor from "../components/ImageEditor";
+import Footer from "../components/Footer";
 
 export default function Home() {
   return (
-    <main className="min-h-screen p-4 md:p-8 bg-gray-50 font-mono">
-      <div className="max-w-6xl mx-auto">
+    <main className="min-h-screen p-4 md:p-8 bg-gray-50 font-mono flex flex-col">
+      <div className="max-w-6xl mx-auto flex-grow w-full">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center mb-4">
             <div className="flex items-center gap-5">
@@ -19,6 +20,7 @@ export default function Home() {
         </div>
         <ImageEditor />
       </div>
+      <Footer />
     </main>
   );
 }
