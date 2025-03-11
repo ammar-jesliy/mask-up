@@ -42,7 +42,7 @@ MaskUp uses AI image segmentation to identify and isolate the main subject in yo
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/yourusername/mask-up.git
+   git clone https://github.com/ammar-jesliy/mask-up.git
    cd mask-up
    ```
 
