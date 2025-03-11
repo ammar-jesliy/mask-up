@@ -18,7 +18,7 @@ const Footer = () => {
             </a>
           </div>
           <Link
-            href="https://github.com/yourusername/maskup"
+            href="https://github.com/ammar-jesliy/mask-up"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center hover:text-gray-900 transition-colors"
