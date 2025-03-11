@@ -81,16 +81,6 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 4. Adjust settings if needed
 5. Download or share your edited image
 
-## 🧪 Testing
-
-Run the test suite:
-
-```bash
-npm test
-# or
-yarn test
-```
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
