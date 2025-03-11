@@ -392,7 +392,13 @@ const ImageEditor = () => {
                     </Button>
                     <Button
                       variant="outline"
-                      onClick={() => setOriginalImage(null)}
+                      onClick={() => {
+                        setOriginalImage(null);
+                        setSubjectMask(null);
+                        setProcessedImage(null);
+                        setActiveTab("upload");
+                        setFileSizeError(null);
+                      }}
                     >
                       Clear Image
                     </Button>
