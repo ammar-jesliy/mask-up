@@ -38,7 +38,6 @@ const SubjectDetector = ({
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [history, setHistory] = useState<ImageData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [statusMessage, setStatusMessage] = useState("");
   const [aiModelError, setAiModelError] = useState<string | null>(null);
   const [isModelLoading, setIsModelLoading] = useState(false);
   const [modelProgress, setModelProgress] = useState(0);
@@ -356,7 +355,7 @@ const SubjectDetector = ({
       try {
         await loadAIModel();
       } catch (error) {
-        console.log("Failed to load AI model, aborting detection");
+        console.log("Failed to load AI model, aborting detection: " + error);
         return;
       }
     }
@@ -805,7 +804,7 @@ const SubjectDetector = ({
         {isLoading && (
           <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
             <div className="bg-white p-4 rounded-md shadow-md">
-              {statusMessage || "Processing..."}
+              Processing...
             </div>
           </div>
         )}
